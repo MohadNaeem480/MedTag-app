@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, View } from "react-native";
+import { GlobalProvider } from "../src/context/GlobalContext"; // 👈 import
 
 export default function RootLayout() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -9,7 +10,7 @@ export default function RootLayout() {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        const token = await AsyncStorage.getItem("token");
+        const token = await AsyncStorage.getItem("accessToken"); // 👈 use correct key
         setIsLoggedIn(!!token);
       } catch (error) {
         console.error("Error reading token:", error);
@@ -30,13 +31,17 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {isLoggedIn ? (
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      ) : (
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      )}
-      <Stack.Screen name="+not-found" />
-    </Stack>
+    <GlobalProvider>
+      {" "}
+      {/* 👈 wrap whole navigation */}
+      <Stack screenOptions={{ headerShown: false }}>
+        {isLoggedIn ? (
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        ) : (
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        )}
+        <Stack.Screen name="+not-found" />
+      </Stack>
+    </GlobalProvider>
   );
 }

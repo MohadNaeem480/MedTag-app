@@ -1,21 +1,24 @@
-import React, { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import React, { useEffect } from "react";
+import { View, StyleSheet } from "react-native";
 import FileUpload from "@/components/FileUpload";
 import FileList from "@/components/FileList";
+import useFiles from "@/src/services/useFiles";
 
 export default function HomePage() {
-  const [files, setFiles] = useState([
-    { id: 1, filename: "report.pdf", uploaded_at: "2025-08-01T10:00:00Z" },
-    { id: 2, filename: "scan.png", uploaded_at: "2025-08-05T14:30:00Z" },
-  ]);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const [searchQuery, setSearchQuery] = useState("");
+  const { files, fetchFiles, loading } = useFiles();
+  const [viewMode, setViewMode] = React.useState<"list" | "grid">("list");
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  // Fetch files when component mounts
+  useEffect(() => {
+    fetchFiles();
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
       <FileList
         headerComponent={<FileUpload />}
-        refreshList={() => console.log("Refresh list")}
+        refreshList={fetchFiles}
         files={files}
         viewMode={viewMode}
         setViewMode={setViewMode}
