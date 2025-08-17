@@ -1,3 +1,4 @@
+import React from "react";
 import {
   View,
   Text,
@@ -6,7 +7,12 @@ import {
   FlatList,
   StyleSheet,
 } from "react-native";
-import { List as ListIcon, LayoutGrid } from "lucide-react-native";
+import {
+  List as ListIcon,
+  LayoutGrid,
+  Trash2,
+  Search,
+} from "lucide-react-native";
 
 type FileItem = {
   id: string | number;
@@ -16,43 +22,74 @@ type FileItem = {
 
 type Props = {
   refreshList: () => void;
-  files?: FileItem[];
+  files: FileItem[];
   viewMode: "list" | "grid";
   setViewMode: (mode: "list" | "grid") => void;
   searchQuery: string;
-  setSearchQuery: (text: string) => void;
+  setSearchQuery: (query: string) => void;
+  headerComponent?: React.ReactNode;
 };
 
 export default function FileList({
   refreshList,
-  files = [],
+  files,
   viewMode,
   setViewMode,
   searchQuery,
   setSearchQuery,
+  headerComponent,
 }: Props) {
   const filteredFiles = files.filter((file) =>
     file.filename.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  return (
-    <View style={styles.wrapper}>
-      <View style={styles.header}>
+  const renderListItem = ({ item }: { item: FileItem }) => {
+    const ext = item.filename.split(".").pop();
+    return (
+      <View style={styles.fileRow}>
+        <View style={{ flex: 2 }}>
+          <Text style={styles.fileName}>{item.filename}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.folderText}>Uploaded Documents</Text>
+        </View>
+        <View style={{ flex: 0.7 }}>
+          <Text style={styles.fileType}>.{ext}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.fileDate}>
+            {new Date(item.uploaded_at).toLocaleDateString()}
+          </Text>
+        </View>
+        <TouchableOpacity>
+          <Trash2 size={18} color="#D9534F" />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const listHeader = (
+    <View>
+      {headerComponent}
+      <View style={{ marginTop: 20, marginBottom: 12 }}>
         <Text style={styles.title}>
           Documents | {filteredFiles.length} Files
         </Text>
-        <Text style={styles.subtitle}>Click on a file to preview</Text>
+        <Text style={styles.subtitle}>Click on a file to preview the file</Text>
       </View>
 
-      {/* Search box */}
-      <TextInput
-        style={styles.search}
-        placeholder="Search files..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
+      {/* Search */}
+      <View style={styles.searchWrapper}>
+        <Search size={18} color="#888" style={styles.searchIcon} />
+        <TextInput
+          style={styles.search}
+          placeholder="Search files..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
 
-      {/* View mode buttons */}
+      {/* Mode buttons */}
       <View style={styles.modeButtons}>
         <TouchableOpacity
           style={[styles.modeButton, viewMode === "list" && styles.activeMode]}
@@ -73,40 +110,46 @@ export default function FileList({
           />
         </TouchableOpacity>
       </View>
+    </View>
+  );
 
-      {/* Files */}
-      {viewMode === "list" ? (
-        <FlatList
-          data={filteredFiles}
-          keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => (
-            <View style={styles.fileRow}>
-              <Text style={styles.fileName}>{item.filename}</Text>
-              <Text style={styles.fileDate}>
-                {new Date(item.uploaded_at).toLocaleDateString()}
-              </Text>
-            </View>
-          )}
-        />
-      ) : (
-        <View style={styles.grid}>
-          {filteredFiles.map((file) => (
-            <View key={file.id} style={styles.gridItem}>
-              <Text style={styles.fileName}>{file.filename}</Text>
-            </View>
-          ))}
+  return viewMode === "list" ? (
+    <FlatList
+      key={"list"}
+      data={filteredFiles}
+      keyExtractor={(item) => String(item.id)}
+      renderItem={renderListItem}
+      ListHeaderComponent={listHeader}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        marginTop: 12,
+        paddingBottom: 80,
+      }}
+    />
+  ) : (
+    <FlatList
+      key={"grid"}
+      data={filteredFiles}
+      keyExtractor={(item) => String(item.id)}
+      numColumns={2}
+      ListHeaderComponent={listHeader}
+      columnWrapperStyle={{ justifyContent: "space-between" }}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingBottom: 80,
+      }}
+      renderItem={({ item }) => (
+        <View style={styles.gridItem}>
+          <Text style={styles.fileName}>{item.filename}</Text>
         </View>
       )}
-    </View>
+    />
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
     padding: 16,
-  },
-  header: {
-    marginBottom: 12,
   },
   title: {
     fontWeight: "600",
@@ -116,15 +159,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#555",
   },
+  searchWrapper: {
+    position: "relative",
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  searchIcon: {
+    position: "absolute",
+    left: 10,
+    top: "50%",
+    marginTop: -9,
+  },
   search: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
     padding: 8,
-    marginBottom: 12,
+    paddingLeft: 32,
   },
   modeButtons: {
     flexDirection: "row",
+    justifyContent: "flex-end",
     marginBottom: 12,
   },
   modeButton: {
@@ -132,21 +187,30 @@ const styles = StyleSheet.create({
     borderColor: "#175635",
     padding: 8,
     borderRadius: 6,
-    marginRight: 8,
+    marginLeft: 8,
   },
   activeMode: {
     backgroundColor: "#175635",
   },
   fileRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 8,
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
   fileName: {
     fontSize: 14,
     fontWeight: "500",
+  },
+  folderText: {
+    fontSize: 12,
+    color: "#175635",
+  },
+  fileType: {
+    fontSize: 12,
+    color: "#555",
   },
   fileDate: {
     fontSize: 12,

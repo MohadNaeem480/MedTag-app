@@ -1,34 +1,37 @@
-import { useState } from "react";
-import { ScrollView, View } from "react-native";
-import UploadDocument from "@/components/UploadDocuments";
+import React, { useEffect } from "react";
+import { View, StyleSheet } from "react-native";
+import FileUpload from "@/components/FileUpload";
 import FileList from "@/components/FileList";
+import useFiles from "@/src/services/useFiles";
 
 export default function HomePage() {
-  const [files, setFiles] = useState([
-    { id: 1, filename: "report.pdf", uploaded_at: "2025-08-01T10:00:00Z" },
-    { id: 2, filename: "scan.png", uploaded_at: "2025-08-05T14:30:00Z" },
-  ]);
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
-  const [searchQuery, setSearchQuery] = useState("");
+  const { files, fetchFiles, loading } = useFiles();
+  const [viewMode, setViewMode] = React.useState<"list" | "grid">("list");
+  const [searchQuery, setSearchQuery] = React.useState("");
 
-  const refreshList = () => {
-    console.log("Refresh list");
-    // Later: call fetchFiles() from your hook
-  };
+  // Fetch files when component mounts
+  useEffect(() => {
+    fetchFiles();
+  }, []);
 
   return (
-    <ScrollView className="flex-1 bg-white">
-      <View className="px-4 py-4">
-        <UploadDocument onUploadSuccess={refreshList} />
-        <FileList
-          refreshList={refreshList}
-          files={files}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-        />
-      </View>
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <FileList
+        headerComponent={<FileUpload />}
+        refreshList={fetchFiles}
+        files={files}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+});
